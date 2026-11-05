@@ -99,8 +99,8 @@
     </main>
 
     <script>
-        const SUPABASE_URL = "YOUR_SUPABASE_URL";
-        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+        const SUPABASE_URL = "https://pqxfjszlxpnyrjgiydb.supabase.co";
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY"; // Replace with your publishable key if needed
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
@@ -138,18 +138,47 @@
         }
 
         function startRazorpayPayment() {
+            if (!currentUser) {
+                alert('Please login or register first before proceeding to checkout.');
+                switchView('auth');
+                return;
+            }
+
             const options = {
-                key: "YOUR_RAZORPAY_KEY_ID",
+                key: "rzp_test_TwR8MASx8DbNw0",
                 amount: 249900,
                 currency: "INR",
                 name: "Fx & Stock Analytics Pro",
                 description: "Masterclass Lifetime Access",
                 handler: async function (response) {
                     alert('Payment successful! Updating access...');
-                    // Update profile in Supabase via backend webhook or direct update
-                    hasPurchased = true;
-                    switchView('dashboard');
-                    renderCurriculum();
+                    
+                    try {
+                        const { error } = await supabaseClient
+                            .from('profiles')
+                            .update({ 
+                                has_purchased: true, 
+                                razorpay_payment_id: response.razorpay_payment_id 
+                            })
+                            .eq('id', currentUser.id);
+
+                        if (error) {
+                            console.error('Database update error:', error);
+                            alert('Payment successful, but failed to update access. Please contact support.');
+                            return;
+                        }
+
+                        hasPurchased = true;
+                        alert('Access unlocked successfully!');
+                        switchView('dashboard');
+                        renderCurriculum();
+                    } catch (err) {
+                        console.error('Error handling payment success callback:', err);
+                    }
+                },
+                prefill: {
+                    name: currentUser.email.split('@')[0],
+                    email: currentUser.email
                 },
                 theme: { color: "#00ff88" }
             };
