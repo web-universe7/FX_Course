@@ -54,8 +54,8 @@
             <div class="bg-brand-card border border-brand-border rounded-2xl p-8 shadow-2xl">
                 <!-- Tabs -->
                 <div class="flex mb-6 border-b border-brand-border">
-                    <button id="tab-login" onclick="setAuthMode('login')" class="flex-1 pb-3 font-bold text-sm text-brand-green border-b-2 border-brand-green">Login</button>
-                    <button id="tab-register" onclick="setAuthMode('register')" class="flex-1 pb-3 font-bold text-sm text-slate-400">Register</button>
+                    <button id="tab-login" type="button" onclick="setAuthMode('login')" class="flex-1 pb-3 font-bold text-sm text-brand-green border-b-2 border-brand-green">Login</button>
+                    <button id="tab-register" type="button" onclick="setAuthMode('register')" class="flex-1 pb-3 font-bold text-sm text-slate-400">Register</button>
                 </div>
 
                 <h2 id="auth-title" class="text-2xl font-bold mb-6">Welcome Back</h2>
@@ -63,11 +63,11 @@
                 <form onsubmit="handleAuth(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1">Email</label>
-                        <input type="email" id="auth-email" required class="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-3 text-sm focus:border-brand-green focus:outline-none">
+                        <input type="email" id="auth-email" required class="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-3 text-sm focus:border-brand-green focus:outline-none text-white">
                     </div>
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1">Password</label>
-                        <input type="password" id="auth-password" required class="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-3 text-sm focus:border-brand-green focus:outline-none">
+                        <input type="password" id="auth-password" required class="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-3 text-sm focus:border-brand-green focus:outline-none text-white">
                     </div>
                     <button type="submit" id="auth-submit-btn" class="w-full py-3.5 rounded-xl bg-brand-green text-black font-bold text-sm hover:opacity-90 transition">Login</button>
                 </form>
@@ -109,13 +109,13 @@
     <script>
         const SUPABASE_URL = "https://pqxfjszlxpnyrjgiydb.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_x-0rxQQlGXgqrL7aCVyOAQ_7W1ICxg6";
-        const BACKEND_URL = "https://fx-course.onrender.com"; // Change to http://localhost:3000 if testing backend locally
+        const BACKEND_URL = "https://fx-course.onrender.com"; // Your live backend server on Render for video streaming
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let hasPurchased = false;
-        let authMode = 'login'; // 'login' or 'register'
+        let authMode = 'login';
 
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -223,7 +223,7 @@
             }
 
             const options = {
-                key: "rzp_test_TwR8MASx8DbNw0", // From your screenshot
+                key: "rzp_test_TwR8MASx8DbNw0",
                 amount: 249900,
                 currency: "INR",
                 name: "Fx & Stock Analytics Pro",
