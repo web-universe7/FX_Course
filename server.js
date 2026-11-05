@@ -1,20 +1,25 @@
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
+
+// Enable CORS for all origins or restrict to your GitHub Pages domain
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Initialize Supabase Server Client using environment variables
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Initialize Supabase Server Client safely with fallbacks
+const supabaseUrl = process.env.SUPABASE_URL || "https://pqxfjszlxpnyrjgiydb.supabase.co";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "sb_secret_3xleMcZdwgGZA1YTcdMo6Q_j7SY8sFE";
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    console.warn("WARNING: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set in environment variables.");
-}
-
-const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '');
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Secure endpoint to generate temporary 2-hour pre-signed streaming URL from Supabase Storage
 app.post('/api/get-video-stream', async (req, res) => {
@@ -58,13 +63,11 @@ app.post('/api/razorpay-webhook', async (req, res) => {
     try {
         const event = req.body;
         
-        // Handle successful payment event from Razorpay
-        if (event.event === 'payment.captured') {
+        if (event && event.event === 'payment.captured') {
             const paymentEntity = event.payload.payment.entity;
             const customerEmail = paymentEntity.email;
             const paymentId = paymentEntity.id;
 
-            // Update user profile has_purchased flag in Supabase database
             const { error: updateError } = await supabase
                 .from('profiles')
                 .update({ 
@@ -88,5 +91,5 @@ app.post('/api/razorpay-webhook', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Fx Masterclass server running locally on port ${PORT}`);
+    console.log(`Fx Masterclass server running on port ${PORT}`);
 });
