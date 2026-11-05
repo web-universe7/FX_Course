@@ -161,32 +161,39 @@
             `;
         }
 
-        async function handleAuth(event) {
-            event.preventDefault();
-            const email = document.getElementById('auth-email').value;
-            const password = document.getElementById('auth-password').value;
-            
-            if (authMode === 'register') {
-                const { data, error } = await supabaseClient.auth.signUp({ email, password });
-                if (error) {
-                    alert(error.message);
-                    return;
-                }
-                alert('Account successfully created! You are now logged in.');
-                currentUser = data.user;
-            } else {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) {
-                    alert(error.message);
-                    return;
-                }
-                alert('Login successful!');
-                currentUser = data.user;
-            }
-
+async function handleAuth(event) {
+    event.preventDefault();
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    
+    if (authMode === 'register') {
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) {
+            alert('Registration Error: ' + error.message);
+            return;
+        }
+        
+        if (data.session) {
+            alert('Account successfully created and logged in!');
+            currentUser = data.session.user;
             updateAuthNavUI();
             await checkPurchaseStatus();
+        } else {
+            alert('Registration successful! Please check your email to confirm your account before logging in.');
+            setAuthMode('login');
         }
+    } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+            alert('Login Error: ' + error.message);
+            return;
+        }
+        alert('Login successful!');
+        currentUser = data.user;
+        updateAuthNavUI();
+        await checkPurchaseStatus();
+    }
+}
 
         async function handleLogout() {
             await supabaseClient.auth.signOut();
