@@ -46,13 +46,20 @@
                 Master Institutional Trading & <span class="text-brand-green">Consistently Profit</span>
             </h1>
             <p class="text-slate-400 max-w-2xl mx-auto mb-10">50 masterclass video modules covering order blocks, liquidity, and risk management.</p>
-            <button onclick="switchView('checkout')" class="px-8 py-4 rounded-xl bg-brand-green text-black font-extrabold hover:shadow-[0_0_30px_rgba(0,255,136,0.5)]">Enroll Now for ₹2499 INR</button>
+            <button onclick="switchView('checkout')" class="px-8 py-4 rounded-xl bg-brand-green text-black font-extrabold hover:shadow-[0_0_30px_rgba(0,255,136,0.5)] transition">Enroll Now for ₹2499 INR</button>
         </div>
 
         <!-- Auth View -->
         <div id="view-auth" class="hidden max-w-md mx-auto px-4 py-20">
             <div class="bg-brand-card border border-brand-border rounded-2xl p-8 shadow-2xl">
-                <h2 id="auth-title" class="text-2xl font-bold mb-6">Account Authentication</h2>
+                <!-- Tabs -->
+                <div class="flex mb-6 border-b border-brand-border">
+                    <button id="tab-login" onclick="setAuthMode('login')" class="flex-1 pb-3 font-bold text-sm text-brand-green border-b-2 border-brand-green">Login</button>
+                    <button id="tab-register" onclick="setAuthMode('register')" class="flex-1 pb-3 font-bold text-sm text-slate-400">Register</button>
+                </div>
+
+                <h2 id="auth-title" class="text-2xl font-bold mb-6">Welcome Back</h2>
+                
                 <form onsubmit="handleAuth(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1">Email</label>
@@ -62,7 +69,7 @@
                         <label class="block text-xs uppercase text-slate-400 mb-1">Password</label>
                         <input type="password" id="auth-password" required class="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-3 text-sm focus:border-brand-green focus:outline-none">
                     </div>
-                    <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-green text-black font-bold text-sm hover:opacity-90 transition">Continue</button>
+                    <button type="submit" id="auth-submit-btn" class="w-full py-3.5 rounded-xl bg-brand-green text-black font-bold text-sm hover:opacity-90 transition">Login</button>
                 </form>
             </div>
         </div>
@@ -102,20 +109,20 @@
     <script>
         const SUPABASE_URL = "https://pqxfjszlxpnyrjgiydb.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_x-0rxQQlGXgqrL7aCVyOAQ_7W1ICxg6";
-        const BACKEND_URL = "https://fx-course.onrender.com";
+        const BACKEND_URL = "https://fx-course.onrender.com"; // Change to http://localhost:3000 if testing backend locally
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let hasPurchased = false;
+        let authMode = 'login'; // 'login' or 'register'
 
-        // Check active session on initial page load
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 currentUser = session.user;
                 updateAuthNavUI();
-                checkPurchaseStatus();
+                await checkPurchaseStatus();
             }
         });
 
@@ -123,6 +130,26 @@
             document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             window.scrollTo(0, 0);
+        }
+
+        function setAuthMode(mode) {
+            authMode = mode;
+            const loginTab = document.getElementById('tab-login');
+            const registerTab = document.getElementById('tab-register');
+            const authTitle = document.getElementById('auth-title');
+            const submitBtn = document.getElementById('auth-submit-btn');
+
+            if (mode === 'login') {
+                loginTab.className = "flex-1 pb-3 font-bold text-sm text-brand-green border-b-2 border-brand-green";
+                registerTab.className = "flex-1 pb-3 font-bold text-sm text-slate-400";
+                authTitle.textContent = "Welcome Back";
+                submitBtn.textContent = "Login";
+            } else {
+                registerTab.className = "flex-1 pb-3 font-bold text-sm text-brand-green border-b-2 border-brand-green";
+                loginTab.className = "flex-1 pb-3 font-bold text-sm text-slate-400";
+                authTitle.textContent = "Create Account";
+                submitBtn.textContent = "Register";
+            }
         }
 
         function updateAuthNavUI() {
@@ -139,25 +166,26 @@
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
             
-            // Try signing in first
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            
-            if (error) {
-                // If login fails, attempt registration automatically
-                const signUpRes = await supabaseClient.auth.signUp({ email, password });
-                if (signUpRes.error) {
-                    alert(signUpRes.error.message);
+            if (authMode === 'register') {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) {
+                    alert(error.message);
                     return;
                 }
-                alert('Account successfully created and logged in!');
-                currentUser = signUpRes.data.user;
-            } else {
+                alert('Account successfully created! You are now logged in.');
                 currentUser = data.user;
+            } else {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    alert(error.message);
+                    return;
+                }
                 alert('Login successful!');
+                currentUser = data.user;
             }
 
             updateAuthNavUI();
-            checkPurchaseStatus();
+            await checkPurchaseStatus();
         }
 
         async function handleLogout() {
@@ -173,10 +201,16 @@
 
         async function checkPurchaseStatus() {
             if (!currentUser) return;
-            const { data, error } = await supabaseClient.from('profiles').select('has_purchased').eq('id', currentUser.id).single();
-            if (data && data.has_purchased) {
-                hasPurchased = true;
+
+            let { data, error } = await supabaseClient.from('profiles').select('has_purchased').eq('id', currentUser.id).single();
+            
+            if (error || !data) {
+                await supabaseClient.from('profiles').upsert({ id: currentUser.id, email: currentUser.email, has_purchased: false });
+                hasPurchased = false;
+            } else {
+                hasPurchased = data.has_purchased;
             }
+
             switchView('dashboard');
             renderCurriculum();
         }
@@ -189,7 +223,7 @@
             }
 
             const options = {
-                key: "rzp_test_TwR8MASx8DbNw0",
+                key: "rzp_test_TwR8MASx8DbNw0", // From your screenshot
                 amount: 249900,
                 currency: "INR",
                 name: "Fx & Stock Analytics Pro",
@@ -200,11 +234,12 @@
                     try {
                         const { error } = await supabaseClient
                             .from('profiles')
-                            .update({ 
+                            .upsert({ 
+                                id: currentUser.id,
+                                email: currentUser.email,
                                 has_purchased: true, 
                                 razorpay_payment_id: response.razorpay_payment_id 
-                            })
-                            .eq('id', currentUser.id);
+                            });
 
                         if (error) {
                             console.error('Database update error:', error);
@@ -237,7 +272,7 @@
 
         function renderCurriculum() {
             const container = document.getElementById('curriculum-list');
-            container.innerHTML = lessons.map((l, index) => `
+            container.innerHTML = lessons.map((l) => `
                 <div onclick="selectLesson('${l.key}')" class="p-3 rounded-xl bg-brand-dark border border-brand-border cursor-pointer hover:border-brand-green/50 flex justify-between items-center">
                     <span class="text-sm font-semibold">${l.title}</span>
                     <i class="fa-solid ${hasPurchased ? 'fa-play text-brand-green' : 'fa-lock text-slate-500'} text-xs"></i>
