@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fx & Stock Analytics Pro Masterclass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { green: '#00ff88', dark: '#0b0f19', card: '#131c2e', border: '#1e293b' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-brand-dark text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <header class="border-b border-brand-border bg-brand-dark/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('landing')">
+                <div class="w-10 h-10 rounded-xl bg-brand-green/10 border border-brand-green/30 flex items-center justify-center text-brand-green font-bold text-xl">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <span class="font-bold text-lg">FX & STOCK <span class="text-brand-green">PRO</span></span>
+            </div>
+            <div id="nav-auth-section" class="flex items-center space-x-4">
+                <button onclick="switchView('auth')" class="px-4 py-2 text-sm font-semibold hover:text-brand-green">Login</button>
+                <button onclick="switchView('checkout')" class="px-5 py-2.5 rounded-xl bg-brand-green text-black font-bold text-sm">Enroll ₹2499</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Landing View -->
+        <div id="view-landing" class="max-w-7xl mx-auto px-4 py-20 text-center">
+            <h1 class="text-4xl sm:text-6xl font-extrabold max-w-4xl mx-auto mb-6">
+                Master Institutional Trading & <span class="text-brand-green">Consistently Profit</span>
+            </h1>
+            <p class="text-slate-400 max-w-2xl mx-auto mb-10">50 masterclass video modules covering order blocks, liquidity, and risk management.</p>
+            <button onclick="switchView('checkout')" class="px-8 py-4 rounded-xl bg-brand-green text-black font-extrabold hover:shadow-[0_0_30px_rgba(0,255,136,0.5)]">Enroll Now for ₹2499 INR</button>
+        </div>
+
+        <!-- Auth View -->
+        <div id="view-auth" class="hidden max-w-md mx-auto px-4 py-20">
+            <div class="bg-brand-card border border-brand-border rounded-2xl p-8 shadow-2xl">
+                <h2 id="auth-title" class="text-2xl font-bold mb-6">Account Authentication</h2>
+                <form onsubmit="handleAuth(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Email</label>
+                        <input type="email" id="auth-email" required class="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-3 text-sm focus:border-brand-green">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-400 mb-1">Password</label>
+                        <input type="password" id="auth-password" required class="w-full bg-brand-dark border border-brand-border rounded-xl px-4 py-3 text-sm focus:border-brand-green">
+                    </div>
+                    <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-green text-black font-bold text-sm">Continue</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Checkout View -->
+        <div id="view-checkout" class="hidden max-w-2xl mx-auto px-4 py-16">
+            <div class="bg-brand-card border border-brand-border rounded-2xl p-8">
+                <h2 class="text-2xl font-bold mb-6">Checkout Summary</h2>
+                <div class="flex justify-between items-center mb-8 text-lg font-bold border-y border-brand-border py-4">
+                    <span>Total Amount</span>
+                    <span class="text-brand-green">₹2,499 INR</span>
+                </div>
+                <button onclick="startRazorpayPayment()" class="w-full py-4 rounded-xl bg-brand-green text-black font-extrabold">Pay ₹2499 with Razorpay</button>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="view-dashboard" class="hidden max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-brand-card border border-brand-border rounded-2xl aspect-video relative flex items-center justify-center bg-black">
+                    <video id="course-video-player" controls controlsList="nodownload" class="w-full h-full object-contain hidden"></video>
+                    <div id="video-locked-overlay" class="absolute inset-0 bg-brand-dark/90 flex flex-col items-center justify-center p-6 text-center">
+                        <i class="fa-solid fa-lock text-brand-green text-3xl mb-3"></i>
+                        <h3 class="text-xl font-bold mb-2">Lesson Locked</h3>
+                        <button onclick="switchView('checkout')" class="px-6 py-3 rounded-xl bg-brand-green text-black font-bold text-sm">Unlock for ₹2499</button>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-brand-card border border-brand-border rounded-2xl p-6 h-[500px] overflow-y-auto">
+                <h3 class="font-bold text-lg mb-4">Curriculum Playlist</h3>
+                <div id="curriculum-list" class="space-y-3"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = "YOUR_SUPABASE_URL";
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let hasPurchased = false;
+
+        function switchView(viewId) {
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+        }
+
+        async function handleAuth(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                const signUpRes = await supabaseClient.auth.signUp({ email, password });
+                if (signUpRes.error) { alert(signUpRes.error.message); return; }
+                alert('Account created! Please check your email or log in.');
+                return;
+            }
+            currentUser = data.user;
+            checkPurchaseStatus();
+        }
+
+        async function checkPurchaseStatus() {
+            if (!currentUser) return;
+            const { data } = await supabaseClient.from('profiles').select('has_purchased').eq('id', currentUser.id).single();
+            if (data && data.has_purchased) {
+                hasPurchased = true;
+            }
+            switchView('dashboard');
+            renderCurriculum();
+        }
+
+        function startRazorpayPayment() {
+            const options = {
+                key: "YOUR_RAZORPAY_KEY_ID",
+                amount: 249900,
+                currency: "INR",
+                name: "Fx & Stock Analytics Pro",
+                description: "Masterclass Lifetime Access",
+                handler: async function (response) {
+                    alert('Payment successful! Updating access...');
+                    // Update profile in Supabase via backend webhook or direct update
+                    hasPurchased = true;
+                    switchView('dashboard');
+                    renderCurriculum();
+                },
+                theme: { color: "#00ff88" }
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        }
+
+        const lessons = [
+            { id: 1, title: 'Lesson 1: Market Structure & BOS', key: 'lesson-1.mp4' },
+            { id: 2, title: 'Lesson 2: Advanced Order Blocks', key: 'lesson-2.mp4' }
+        ];
+
+        function renderCurriculum() {
+            const container = document.getElementById('curriculum-list');
+            container.innerHTML = lessons.map((l, index) => `
+                <div onclick="selectLesson('${l.key}')" class="p-3 rounded-xl bg-brand-dark border border-brand-border cursor-pointer hover:border-brand-green/50 flex justify-between items-center">
+                    <span class="text-sm font-semibold">${l.title}</span>
+                    <i class="fa-solid ${hasPurchased ? 'fa-play text-brand-green' : 'fa-lock text-slate-500'} text-xs"></i>
+                </div>
+            `).join('');
+            document.getElementById('video-locked-overlay').classList.toggle('hidden', hasPurchased);
+            document.getElementById('course-video-player').classList.toggle('hidden', !hasPurchased);
+        }
+
+        async function selectLesson(videoKey) {
+            if (!hasPurchased) { switchView('checkout'); return; }
+            const res = await fetch('/api/get-video-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userEmail: currentUser.email, videoKey })
+            });
+            const data = await res.json();
+            if (data.streamUrl) {
+                const player = document.getElementById('course-video-player');
+                player.src = data.streamUrl;
+                player.play();
+            }
+        }
+    </script>
+</body>
+</html>
