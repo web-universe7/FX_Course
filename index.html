@@ -101,7 +101,9 @@
 
     <script>
         const SUPABASE_URL = "https://pqxfjszlxpnyrjgiydb.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // Replace with your active Supabase publishable anon key if needed
+        const SUPABASE_ANON_KEY = "sb_publishable_x-0rxQQlGXgqrL7aCVyOAQ_7W1ICxg6";
+        const BACKEND_URL = "https://fx-course.onrender.com";
+
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
@@ -248,7 +250,7 @@
         async function selectLesson(videoKey) {
             if (!hasPurchased) { switchView('checkout'); return; }
             try {
-                const res = await fetch('/api/get-video-stream', {
+                const res = await fetch(`${BACKEND_URL}/api/get-video-stream`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userEmail: currentUser.email, videoKey })
@@ -263,6 +265,7 @@
                 }
             } catch (err) {
                 console.error('Streaming connection error:', err);
+                alert('Failed to connect to the streaming server.');
             }
         }
     </script>
